@@ -526,13 +526,18 @@ function checkOnboarding() {
     }
 }
 
-document.getElementById('btnGuardarPerfil').addEventListener('click', () => {
+document.getElementById('btnGuardarPerfil').addEventListener('click', async () => {
     const val = document.getElementById('inputOperario').value.trim();
     const pin = document.getElementById('inputPin').value.trim();
     if (!val || !pin) {
         alert('Ingrese su Nombre y el PIN operativo de cuadrilla.');
         return;
     }
+    try {
+        const testStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        testStream.getTracks().forEach(t => t.stop());
+    } catch (e) {}
+
     localStorage.setItem('coopi_agente_perfil', val);
     localStorage.setItem('coopi_agente_pin', pin);
     checkOnboarding();
@@ -640,7 +645,11 @@ document.getElementById('btnRecordAudio').addEventListener('click', async () => 
                 btnRec.innerText = '⏹️ DETENER GRABACION (' + AppState.recordSeconds + 's)';
             }, 1000);
         } catch (err) {
-            alert('No se pudo acceder al micrófono: ' + err.message);
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                alert('⚠️ El micrófono está bloqueado en este teléfono.\n\nPara habilitarlo:\n• En Android (Chrome): tocá los 3 puntitos (⋮) arriba > Configuración > Configuración de sitios > Micrófono > Permitir.\n• En iPhone (Safari): tocá "aA" en la barra > Configuración del sitio web > Micrófono > Permitir.');
+            } else {
+                alert('No se pudo acceder al micrófono: ' + err.message);
+            }
         }
     } else {
         AppState.mediaRecorder.stop();

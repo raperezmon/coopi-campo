@@ -1,4 +1,4 @@
-const CACHE_NAME = 'coopi-campo-v1';
+const CACHE_NAME = 'coopi-campo-v2';
 const ASSETS = [
   './',
   './index.html',

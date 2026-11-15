@@ -121,23 +121,24 @@
             color: var(--text-muted);
             margin-bottom: 6px;
         }
-        select, input[type="text"], input[type="password"] {
+        select, input[type="text"], input[type="password"], textarea {
             width: 100%;
-            height: 52px;
-            padding: 0 12px;
+            padding: 12px;
             font-size: 1rem;
             border: 2px solid var(--border);
             border-radius: 8px;
             background: #fff;
             color: var(--text-main);
         }
-        select:focus, input:focus {
+        select, input[type="text"], input[type="password"] { height: 50px; }
+        textarea { min-height: 76px; resize: vertical; }
+        select:focus, input:focus, textarea:focus {
             border-color: var(--primary);
             outline: none;
         }
         .btn {
             width: 100%;
-            min-height: 56px;
+            min-height: 54px;
             border: none;
             border-radius: 8px;
             font-size: 1rem;
@@ -161,9 +162,9 @@
         .recorder-status {
             text-align: center;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             color: var(--primary-dark);
-            min-height: 22px;
+            min-height: 20px;
             margin-top: 6px;
         }
         .photos-grid {
@@ -230,11 +231,12 @@
             border: 1px solid #bbf7d0;
             padding: 12px;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             white-space: pre-wrap;
             margin: 12px 0;
-            max-height: 220px;
+            max-height: 260px;
             overflow-y: auto;
+            line-height: 1.4;
         }
         #qrVideo {
             width: 100%;
@@ -333,12 +335,15 @@
             </div>
 
             <div class="form-group">
-                <label>1. Reporte de Voz (Audio)</label>
+                <label>1. Reporte de Voz o Nota Rápida</label>
                 <button type="button" class="btn btn-primary" id="btnRecordAudio">🎙️ Tocar para Grabar Parte</button>
                 <div class="recorder-status" id="recorderStatus">Listo para grabar</div>
                 <div id="audioControlsBox" style="display:none; margin-top:8px;">
                     <audio id="audioPlayback" controls playsinline style="width: 100%;"></audio>
                     <button type="button" class="btn btn-secondary" id="btnDescartarAudio" style="min-height:40px; font-size:0.85rem; margin-top:6px;">🗑️ Descartar Audio</button>
+                </div>
+                <div style="margin-top:8px;">
+                    <textarea id="inputNotaTexto" placeholder="Opcional (o dictado por teclado): detalle breve de la novedad..."></textarea>
                 </div>
             </div>
 
@@ -353,7 +358,7 @@
                 <div class="photos-grid" id="photosGrid"></div>
             </div>
 
-            <button type="button" class="btn btn-success" id="btnEnviarParte" style="margin-top: 20px;">✅ GUARDAR / ENVIAR PARTE</button>
+            <button type="button" class="btn btn-success" id="btnEnviarParte" style="margin-top: 16px;">✅ GUARDAR / ENVIAR PARTE</button>
             <button type="button" class="btn btn-secondary" id="btnSyncManual" style="margin-top: 10px; display:none;">🔄 Sincronizar Pendientes Ahora</button>
         </div>
     </div>
@@ -379,7 +384,7 @@
 
     <div id="loadingOverlay">
         <div class="spinner"></div>
-        <div id="loadingText">Sincronizando parte con CDE y Gemini...</div>
+        <div id="loadingText">Enviando parte y procesando con Gemini IA...</div>
     </div>
 
 <script>
@@ -605,12 +610,12 @@ document.getElementById('btnRecordAudio').addEventListener('click', async () => 
             if ('wakeLock' in navigator) {
                 try { AppState.wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
             }
-            let options = {};
+            let options = { audioBitsPerSecond: 32000 };
             if (typeof MediaRecorder !== 'undefined') {
                 if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-                    options = { mimeType: 'audio/webm;codecs=opus' };
+                    options.mimeType = 'audio/webm;codecs=opus';
                 } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-                    options = { mimeType: 'audio/mp4' };
+                    options.mimeType = 'audio/mp4';
                 }
             }
             AppState.mediaRecorder = new MediaRecorder(stream, options);
@@ -645,11 +650,8 @@ document.getElementById('btnRecordAudio').addEventListener('click', async () => 
                 btnRec.innerText = '⏹️ DETENER GRABACION (' + AppState.recordSeconds + 's)';
             }, 1000);
         } catch (err) {
-            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                alert('⚠️ El micrófono está bloqueado en este teléfono.\n\nPara habilitarlo:\n• En Android (Chrome): tocá los 3 puntitos (⋮) arriba > Configuración > Configuración de sitios > Micrófono > Permitir.\n• En iPhone (Safari): tocá "aA" en la barra > Configuración del sitio web > Micrófono > Permitir.');
-            } else {
-                alert('No se pudo acceder al micrófono: ' + err.message);
-            }
+            statusEl.innerText = '⚠️ Micrófono bloqueado: use el micrófono de su teclado en el cuadro de abajo.';
+            document.getElementById('inputNotaTexto').focus();
         }
     } else {
         AppState.mediaRecorder.stop();
@@ -693,7 +695,7 @@ function procesarArchivosImagen(fileList, inputEl) {
                 const ctx = canvas.getContext('2d');
                 let width = img.width;
                 let height = img.height;
-                const maxDim = 1280;
+                const maxDim = 800;
                 if (width > maxDim || height > maxDim) {
                     if (width > height) {
                         height = Math.round((height * maxDim) / width);
@@ -714,19 +716,19 @@ function procesarArchivosImagen(fileList, inputEl) {
                     : 'GPS: Sin fijacion satelital';
                 const qrText = document.getElementById('inputQrActivo').value.trim() || 'S/D';
 
-                const fontSize = Math.max(13, Math.round(width * 0.022));
+                const fontSize = Math.max(12, Math.round(width * 0.022));
                 const lineHeight = Math.round(fontSize * 1.35);
-                const bandHeight = lineHeight * 3 + 14;
+                const bandHeight = lineHeight * 3 + 12;
 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
                 ctx.fillRect(0, height - bandHeight, width, bandHeight);
                 ctx.fillStyle = '#ffffff';
                 ctx.font = 'bold ' + fontSize + 'px monospace';
-                ctx.fillText('COOPI ' + sistema + ' | ' + fechaHoraAr + ' | OP: ' + AppState.operario, 12, height - bandHeight + lineHeight);
-                ctx.fillText(gpsText, 12, height - bandHeight + lineHeight * 2);
-                ctx.fillText('ACTIVO / QR: ' + qrText, 12, height - bandHeight + lineHeight * 3);
+                ctx.fillText('COOPI ' + sistema + ' | ' + fechaHoraAr + ' | OP: ' + AppState.operario, 10, height - bandHeight + lineHeight);
+                ctx.fillText(gpsText, 10, height - bandHeight + lineHeight * 2);
+                ctx.fillText('ACTIVO / QR: ' + qrText, 10, height - bandHeight + lineHeight * 3);
 
-                const stampedBase64 = canvas.toDataURL('image/jpeg', 0.78);
+                const stampedBase64 = canvas.toDataURL('image/jpeg', 0.65);
                 AppState.fotos.push({
                     base64: stampedBase64.split(',')[1],
                     nombre: 'evidencia_' + Date.now() + '_' + (AppState.fotos.length + 1) + '.jpg',
@@ -815,6 +817,7 @@ function resetearFormulario() {
     AppState.audioBase64 = null;
     AppState.fotos = [];
     document.getElementById('inputQrActivo').value = '';
+    document.getElementById('inputNotaTexto').value = '';
     document.getElementById('audioControlsBox').style.display = 'none';
     document.getElementById('recorderStatus').innerText = 'Listo para grabar';
     document.getElementById('photosGrid').innerHTML = '';
@@ -825,8 +828,9 @@ async function guardarYEnviarParte() {
         alert('Detenga la grabación de audio antes de enviar el parte.');
         return;
     }
-    if (!AppState.audioBase64 && AppState.fotos.length === 0) {
-        alert('Debe adjuntar al menos un reporte de voz (audio) o una fotografía.');
+    const notaTexto = document.getElementById('inputNotaTexto').value.trim();
+    if (!AppState.audioBase64 && AppState.fotos.length === 0 && !notaTexto) {
+        alert('Debe adjuntar un reporte de voz, una nota escrita o una fotografía.');
         return;
     }
     const sistema = document.getElementById('selectSistema').value;
@@ -839,6 +843,7 @@ async function guardarYEnviarParte() {
         sistema: sistema,
         operario: AppState.operario,
         qr_activo: qrActivo,
+        nota_texto: notaTexto,
         gps: AppState.gps,
         audioBase64: AppState.audioBase64 || '',
         audioMimeType: AppState.audioMimeType || 'audio/webm',
@@ -922,66 +927,18 @@ async function sincronizarPendientes() {
 
     try {
         for (const parte of pendientes) {
-            loadingText.innerText = 'Sincronizando parte ' + parte.id_parte.slice(0, 6) + ' (1/3: Creando carpeta CDE)...';
-            const resCarpeta = await apiCall({
-                action: 'crearCarpeta',
-                meta: {
-                    id_parte: parte.id_parte,
-                    timestamp: parte.timestamp,
-                    sistema: parte.sistema,
-                    operario: parte.operario
-                }
+            loadingText.innerText = 'Subiendo evidencias y analizando con Gemini IA...';
+            const res = await apiCall({
+                action: 'enviarParteCompleto',
+                parte: parte
             });
-            if (!resCarpeta.success) throw new Error(resCarpeta.error);
-            const folderId = resCarpeta.folderId;
-
-            if (parte.audioBase64) {
-                loadingText.innerText = 'Subiendo reporte de voz (2/3)...';
-                const ext = parte.audioMimeType.includes('mp4') ? 'mp4' : 'webm';
-                const resAudio = await apiCall({
-                    action: 'subirArchivo',
-                    folderId: folderId,
-                    nombreArchivo: 'reporte_voz.' + ext,
-                    mimeType: parte.audioMimeType,
-                    base64Data: parte.audioBase64
-                });
-                if (!resAudio.success) throw new Error(resAudio.error);
-            }
-
-            for (let i = 0; i < parte.fotos.length; i++) {
-                const foto = parte.fotos[i];
-                loadingText.innerText = 'Subiendo foto ' + (i + 1) + ' de ' + parte.fotos.length + ' (2/3)...';
-                const resFoto = await apiCall({
-                    action: 'subirArchivo',
-                    folderId: folderId,
-                    nombreArchivo: 'evidencia_' + (i + 1) + '.jpg',
-                    mimeType: foto.mimeType,
-                    base64Data: foto.base64
-                });
-                if (!resFoto.success) throw new Error(resFoto.error);
-            }
-
-            loadingText.innerText = 'Analizando con Gemini IA y registrando en Sheets (3/3)...';
-            const resGemini = await apiCall({
-                action: 'procesarParte',
-                payload: {
-                    folderId: folderId,
-                    id_parte: parte.id_parte,
-                    timestamp: parte.timestamp,
-                    sistema: parte.sistema,
-                    operario: parte.operario,
-                    qr_activo: parte.qr_activo,
-                    gps: parte.gps,
-                    cant_fotos: parte.cant_fotos
-                }
-            });
-            if (!resGemini.success) throw new Error(resGemini.error);
+            if (!res.success) throw new Error(res.error);
 
             await eliminarDeIndexedDB(parte.id_parte);
             await actualizarContadorPendientes();
 
             loadingOverlay.style.display = 'none';
-            const iaData = resGemini.resultadoIA;
+            const iaData = res.resultadoIA;
             document.getElementById('whatsappTextPreview').innerText = iaData.mensaje_whatsapp;
             document.getElementById('btnWhatsAppOpen').href = 'https://wa.me/?text=' + encodeURIComponent(iaData.mensaje_whatsapp);
             document.getElementById('resultadoModal').style.display = 'flex';

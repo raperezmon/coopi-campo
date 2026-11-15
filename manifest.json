@@ -1,0 +1,11 @@
+{
+  "name": "COOPI - Aguas del Noroeste",
+  "short_name": "COOPI Campo",
+  "description": "Bitácora Operativa en Campo Offline-First - COOPI",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0369a1",
+  "theme_color": "#0369a1"
+}

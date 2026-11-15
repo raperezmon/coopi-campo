@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>COOPI Campo</title>
+    <meta name="application-name" content="COOPI Campo">
+    <meta name="apple-mobile-web-app-title" content="COOPI Campo">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0369a1">
+    <link rel="manifest" href="./manifest.json">
+    <link id="appleTouchIcon" rel="apple-touch-icon" href="./icon-512.png">
+    <link id="faviconIcon" rel="icon" type="image/png" href="./icon-512.png">
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --border: #cbd5e1;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding-bottom: env(safe-area-inset-bottom, 32px);
+        }
+        header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            color: white;
+            padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 14px 16px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.12);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        header h1 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .header-sub {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+            font-size: 0.8rem;
+            opacity: 0.95;
+        }
+        .btn-link-light {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.45);
+            color: white;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.72rem;
+            cursor: pointer;
+        }
+        .sync-bar {
+            background: #1e293b;
+            color: white;
+            padding: 9px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+        }
+        .install-banner {
+            background: #e0f2fe;
+            border-bottom: 1px solid #bae6fd;
+            color: #0369a1;
+            padding: 10px 14px;
+            font-size: 0.82rem;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 14px auto;
+            padding: 0 12px;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
+        }
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-group { margin-bottom: 14px; }
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        select, input[type="text"], input[type="password"] {
+            width: 100%;
+            height: 52px;
+            padding: 0 12px;
+            font-size: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--text-main);
+        }
+        select:focus, input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        .btn {
+            width: 100%;
+            min-height: 56px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn:active { opacity: 0.85; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-secondary { background-color: #e2e8f0; color: var(--text-main); }
+        .photo-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .recorder-status {
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--primary-dark);
+            min-height: 22px;
+            margin-top: 6px;
+        }
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .photo-thumb-container {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #000;
+        }
+        .photo-thumb-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .photo-delete-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(220, 38, 38, 0.92);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .gps-badge {
+            font-size: 0.82rem;
+            padding: 10px 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            border: 1px dashed var(--border);
+            color: var(--text-muted);
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+        .modal-card {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .whatsapp-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            margin: 12px 0;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        #qrVideo {
+            width: 100%;
+            border-radius: 8px;
+            background: #000;
+            max-height: 280px;
+            object-fit: cover;
+        }
+        #loadingOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            gap: 16px;
+            padding: 24px;
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary-dark);
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #e2e8f0;
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>COOPI - Aguas del Noroeste</h1>
+        <div class="header-sub">
+            <span id="headerUser">Bitácora Operativa Offline-First</span>
+            <button type="button" class="btn-link-light" id="btnCambiarPerfil" style="display:none;">Cambiar</button>
+        </div>
+    </header>
+
+    <div class="sync-bar">
+        <span id="networkStatus">🌐 Verificando red...</span>
+        <span id="pendingCountBadge">📦 Pendientes: 0</span>
+    </div>
+
+    <div class="install-banner" id="installBanner">
+        <span id="installText">📲 Instalar <b>COOPI Campo</b> como App en tu teléfono</span>
+        <button type="button" id="btnInstallApp" style="background:#0369a1;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-weight:700;cursor:pointer;">Instalar</button>
+    </div>
+
+    <div class="container">
+        <div class="card" id="profileCard">
+            <div class="card-title">👤 Identificación de Operario</div>
+            <div class="form-group">
+                <label>Nombre y Apellido / Móvil</label>
+                <input type="text" id="inputOperario" placeholder="Ej: J.J. Ramón Berraondo">
+            </div>
+            <div class="form-group">
+                <label>PIN Operativo COOPI</label>
+                <input type="password" id="inputPin" inputmode="numeric" maxlength="8" placeholder="Ingrese PIN de cuadrilla">
+            </div>
+            <button type="button" class="btn btn-primary" id="btnGuardarPerfil">Ingresar y Guardar Perfil</button>
+        </div>
+
+        <div class="card" id="formCard" style="display:none;">
+            <div class="card-title">💧 Nuevo Parte Operativo</div>
+            <div class="form-group">
+                <label>Sistema / Unidad Operativa</label>
+                <select id="selectSistema">
+                    <option value="ACQ-RSECO">ACQ-RSECO (Acueducto Río Seco / La Encrucijada)</option>
+                    <option value="ACQ-PICH">ACQ-PICH (Acueducto Pichanas – El Chacho)</option>
+                    <option value="ACQ-STEL">ACQ-STEL (Acueducto Santa Elena – San Francisco)</option>
+                    <option value="ACQ-TRAS">ACQ-TRAS (Acueducto Traslasierra)</option>
+                    <option value="ACQ-SAUC">ACQ-SAUC (Cuenca Río de Los Sauces)</option>
+                    <option value="URB-CRUZ">URB-CRUZ (Red Urbana Cruz del Eje)</option>
+                    <option value="URB-CAPI">URB-CAPI (Red Urbana Capilla del Monte)</option>
+                    <option value="URB-CUES">URB-CUES (Red Urbana Cuesta Blanca)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Código Activo / QR Opcional</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="inputQrActivo" placeholder="Escanear QR o ingresar código">
+                    <button type="button" class="btn btn-secondary" style="width: auto; padding: 0 16px;" id="btnEscanearQr">📷 QR</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Geolocalización Pericial</label>
+                <div class="gps-badge" id="gpsBadge">Obteniendo señal GPS de alta precisión...</div>
+            </div>
+
+            <div class="form-group">
+                <label>1. Reporte de Voz (Audio)</label>
+                <button type="button" class="btn btn-primary" id="btnRecordAudio">🎙️ Tocar para Grabar Parte</button>
+                <div class="recorder-status" id="recorderStatus">Listo para grabar</div>
+                <div id="audioControlsBox" style="display:none; margin-top:8px;">
+                    <audio id="audioPlayback" controls playsinline style="width: 100%;"></audio>
+                    <button type="button" class="btn btn-secondary" id="btnDescartarAudio" style="min-height:40px; font-size:0.85rem; margin-top:6px;">🗑️ Descartar Audio</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>2. Evidencia Fotográfica (Con Sello GPS/ISO)</label>
+                <input type="file" id="inputFotoCamera" accept="image/*" capture="environment" style="display:none;">
+                <input type="file" id="inputFotoGallery" accept="image/*" multiple style="display:none;">
+                <div class="photo-actions">
+                    <button type="button" class="btn btn-secondary" id="btnAddFotoCamara">📷 Cámara</button>
+                    <button type="button" class="btn btn-secondary" id="btnAddFotoGaleria">🖼️ Galería</button>
+                </div>
+                <div class="photos-grid" id="photosGrid"></div>
+            </div>
+
+            <button type="button" class="btn btn-success" id="btnEnviarParte" style="margin-top: 20px;">✅ GUARDAR / ENVIAR PARTE</button>
+            <button type="button" class="btn btn-secondary" id="btnSyncManual" style="margin-top: 10px; display:none;">🔄 Sincronizar Pendientes Ahora</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="qrModal">
+        <div class="modal-card">
+            <div class="card-title">📷 Escanear Etiqueta QR de Activo</div>
+            <video id="qrVideo" autoplay playsinline></video>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">Apunte la cámara al código QR...</p>
+            <button type="button" class="btn btn-secondary" id="btnCloseQrModal" style="margin-top:12px;">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="resultadoModal">
+        <div class="modal-card">
+            <div class="card-title">🎉 Parte Procesado por IA</div>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">El parte fue analizado y registrado con éxito en el CDE.</p>
+            <div class="whatsapp-box" id="whatsappTextPreview"></div>
+            <a id="btnWhatsAppOpen" href="#" target="_blank" class="btn btn-success" style="text-decoration: none; margin-top: 12px;">📲 Publicar en Grupo de WhatsApp</a>
+            <button type="button" class="btn btn-secondary" id="btnCloseModal" style="margin-top: 10px;">Cerrar / Nuevo Parte</button>
+        </div>
+    </div>
+
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <div id="loadingText">Sincronizando parte con CDE y Gemini...</div>
+    </div>
+
+<script>
+const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyvfajVM_68dKrtRzv1Sys4wu-JW4R8Xh-kanyAJFjrYqqjxzd_6AYCsI7GTpsAGSikPA/exec';
+
+const AppState = {
+    operario: '',
+    pin: '',
+    gps: { lat: 0, lon: 0, alt: 0, accuracy: 999, timestamp: null },
+    audioBlob: null,
+    audioBase64: null,
+    audioMimeType: 'audio/webm',
+    fotos: [],
+    isRecording: false,
+    isSyncing: false,
+    recordTimer: null,
+    recordSeconds: 0,
+    mediaRecorder: null,
+    audioChunks: [],
+    wakeLock: null,
+    qrStream: null,
+    qrInterval: null,
+    deferredPrompt: null
+};
+
+const DB_NAME = 'COOPI_Bitacora_DB';
+const DB_VERSION = 1;
+const STORE_NAME = 'partes_pendientes';
+let db = null;
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+}
+
+function getDeviceId() {
+    let devId = localStorage.getItem('coopi_device_id');
+    if (!devId) {
+        devId = 'DEV-' + (crypto.randomUUID ? crypto.randomUUID().slice(0, 12) : Date.now().toString(36));
+        localStorage.setItem('coopi_device_id', devId);
+    }
+    return devId;
+}
+
+function generarIconoPNG() {
+    try {
+        const c = document.createElement('canvas');
+        c.width = 512;
+        c.height = 512;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#0369a1';
+        ctx.fillRect(0, 0, 512, 512);
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.moveTo(256, 86);
+        ctx.bezierCurveTo(256, 86, 144, 216, 144, 294);
+        ctx.arc(256, 294, 112, Math.PI, 0, true);
+        ctx.bezierCurveTo(368, 216, 256, 86, 256, 86);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 68px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('COOPI', 256, 466);
+        const pngData = c.toDataURL('image/png');
+        document.getElementById('appleTouchIcon').href = pngData;
+        document.getElementById('faviconIcon').href = pngData;
+    } catch (e) {}
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    AppState.deferredPrompt = e;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (!isStandalone) {
+        document.getElementById('installBanner').style.display = 'flex';
+    }
+});
+
+document.getElementById('btnInstallApp').addEventListener('click', async () => {
+    if (AppState.deferredPrompt) {
+        AppState.deferredPrompt.prompt();
+        await AppState.deferredPrompt.userChoice;
+        AppState.deferredPrompt = null;
+        document.getElementById('installBanner').style.display = 'none';
+    }
+});
+
+function checkIOSInstallHint() {
+    const isIOS = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+    const isStandalone = window.navigator.standalone === true;
+    if (isIOS && !isStandalone) {
+        const banner = document.getElementById('installBanner');
+        document.getElementById('installText').innerHTML = '📲 En iPhone: tocá <b>Compartir (⬆️)</b> y luego <b>"Agregar a inicio"</b>';
+        document.getElementById('btnInstallApp').style.display = 'none';
+        banner.style.display = 'flex';
+    }
+}
+
+function initIndexedDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onerror = (e) => reject(e);
+        request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+        request.onupgradeneeded = (e) => {
+            const database = e.target.result;
+            if (!database.objectStoreNames.contains(STORE_NAME)) {
+                database.createObjectStore(STORE_NAME, { keyPath: 'id_parte' });
+            }
+        };
+    });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    getDeviceId();
+    generarIconoPNG();
+    checkIOSInstallHint();
+    try {
+        await initIndexedDB();
+        checkOnboarding();
+        initNetworkListeners();
+        initGPS();
+        initEventListeners();
+        await actualizarContadorPendientes();
+    } catch (err) {
+        console.error('Error inicializando app:', err);
+    }
+});
+
+function checkOnboarding() {
+    const savedPerfil = localStorage.getItem('coopi_agente_perfil');
+    const savedPin = localStorage.getItem('coopi_agente_pin');
+    if (savedPerfil && savedPin) {
+        AppState.operario = savedPerfil;
+        AppState.pin = savedPin;
+        document.getElementById('profileCard').style.display = 'none';
+        document.getElementById('formCard').style.display = 'block';
+        document.getElementById('headerUser').innerText = 'Operario: ' + savedPerfil;
+        document.getElementById('btnCambiarPerfil').style.display = 'inline-block';
+    } else {
+        document.getElementById('profileCard').style.display = 'block';
+        document.getElementById('formCard').style.display = 'none';
+        document.getElementById('btnCambiarPerfil').style.display = 'none';
+    }
+}
+
+document.getElementById('btnGuardarPerfil').addEventListener('click', () => {
+    const val = document.getElementById('inputOperario').value.trim();
+    const pin = document.getElementById('inputPin').value.trim();
+    if (!val || !pin) {
+        alert('Ingrese su Nombre y el PIN operativo de cuadrilla.');
+        return;
+    }
+    localStorage.setItem('coopi_agente_perfil', val);
+    localStorage.setItem('coopi_agente_pin', pin);
+    checkOnboarding();
+});
+
+document.getElementById('btnCambiarPerfil').addEventListener('click', () => {
+    document.getElementById('inputOperario').value = AppState.operario;
+    document.getElementById('inputPin').value = AppState.pin;
+    document.getElementById('profileCard').style.display = 'block';
+    document.getElementById('formCard').style.display = 'none';
+});
+
+function initNetworkListeners() {
+    window.addEventListener('online', () => { updateNetworkStatus(); sincronizarPendientes(); });
+    window.addEventListener('offline', updateNetworkStatus);
+    updateNetworkStatus();
+}
+
+function updateNetworkStatus() {
+    const statusEl = document.getElementById('networkStatus');
+    if (navigator.onLine) {
+        statusEl.innerHTML = '🟢 ONLINE (Conectado)';
+        statusEl.style.color = '#bbf7d0';
+    } else {
+        statusEl.innerHTML = '🔴 OFFLINE (Cola Local Activa)';
+        statusEl.style.color = '#fecaca';
+    }
+}
+
+function initGPS() {
+    if (!navigator.geolocation) {
+        document.getElementById('gpsBadge').innerText = 'GPS no soportado en este dispositivo.';
+        return;
+    }
+    navigator.geolocation.watchPosition(
+        (pos) => {
+            AppState.gps = {
+                lat: pos.coords.latitude,
+                lon: pos.coords.longitude,
+                alt: pos.coords.altitude !== null ? Math.round(pos.coords.altitude) : 0,
+                accuracy: Math.round(pos.coords.accuracy),
+                timestamp: pos.timestamp
+            };
+            const semaforo = AppState.gps.accuracy <= 15 ? '🟢' : (AppState.gps.accuracy <= 50 ? '🟡' : '🟠');
+            document.getElementById('gpsBadge').innerHTML =
+                semaforo + ' GPS: ' + AppState.gps.lat.toFixed(5) + ', ' + AppState.gps.lon.toFixed(5) +
+                ' (±' + AppState.gps.accuracy + 'm) | Alt: ' + AppState.gps.alt + ' msnm';
+        },
+        () => {
+            document.getElementById('gpsBadge').innerText = '⚠️ Active Ubicación en el teléfono para GPS pericial';
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+    );
+}
+
+document.getElementById('btnRecordAudio').addEventListener('click', async () => {
+    const statusEl = document.getElementById('recorderStatus');
+    const audioEl = document.getElementById('audioPlayback');
+    const controlsBox = document.getElementById('audioControlsBox');
+    const btnRec = document.getElementById('btnRecordAudio');
+
+    if (!AppState.isRecording) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            if ('wakeLock' in navigator) {
+                try { AppState.wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+            }
+            let options = {};
+            if (typeof MediaRecorder !== 'undefined') {
+                if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                    options = { mimeType: 'audio/webm;codecs=opus' };
+                } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                    options = { mimeType: 'audio/mp4' };
+                }
+            }
+            AppState.mediaRecorder = new MediaRecorder(stream, options);
+            AppState.audioChunks = [];
+            AppState.mediaRecorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) AppState.audioChunks.push(e.data);
+            };
+            AppState.mediaRecorder.onstop = async () => {
+                clearInterval(AppState.recordTimer);
+                const fallbackMime = /iphone|ipad|ipod/i.test(navigator.userAgent) ? 'audio/mp4' : 'audio/webm';
+                const actualMime = AppState.mediaRecorder.mimeType || fallbackMime;
+                AppState.audioMimeType = actualMime.split(';')[0];
+                AppState.audioBlob = new Blob(AppState.audioChunks, { type: AppState.audioMimeType });
+                audioEl.src = URL.createObjectURL(AppState.audioBlob);
+                controlsBox.style.display = 'block';
+                statusEl.innerText = '⏳ Procesando audio...';
+                AppState.audioBase64 = await blobToBase64(AppState.audioBlob);
+                statusEl.innerText = '✅ Audio listo (' + AppState.recordSeconds + 's)';
+                if (AppState.wakeLock) {
+                    try { await AppState.wakeLock.release(); AppState.wakeLock = null; } catch (e) {}
+                }
+                stream.getTracks().forEach(track => track.stop());
+            };
+            AppState.mediaRecorder.start();
+            AppState.isRecording = true;
+            AppState.recordSeconds = 0;
+            btnRec.innerText = '⏹️ DETENER GRABACION (0s)';
+            btnRec.classList.replace('btn-primary', 'btn-danger');
+            statusEl.innerText = '🔴 Grabando reporte de voz...';
+            AppState.recordTimer = setInterval(() => {
+                AppState.recordSeconds++;
+                btnRec.innerText = '⏹️ DETENER GRABACION (' + AppState.recordSeconds + 's)';
+            }, 1000);
+        } catch (err) {
+            alert('No se pudo acceder al micrófono: ' + err.message);
+        }
+    } else {
+        AppState.mediaRecorder.stop();
+        AppState.isRecording = false;
+        btnRec.innerText = '🎙️ Grabar Nuevo Audio';
+        btnRec.classList.replace('btn-danger', 'btn-primary');
+    }
+});
+
+document.getElementById('btnDescartarAudio').addEventListener('click', () => {
+    AppState.audioBlob = null;
+    AppState.audioBase64 = null;
+    document.getElementById('audioControlsBox').style.display = 'none';
+    document.getElementById('recorderStatus').innerText = 'Audio descartado. Listo para grabar.';
+});
+
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+const inputFotoCamera = document.getElementById('inputFotoCamera');
+const inputFotoGallery = document.getElementById('inputFotoGallery');
+document.getElementById('btnAddFotoCamara').addEventListener('click', () => inputFotoCamera.click());
+document.getElementById('btnAddFotoGaleria').addEventListener('click', () => inputFotoGallery.click());
+inputFotoCamera.addEventListener('change', (e) => procesarArchivosImagen(e.target.files, inputFotoCamera));
+inputFotoGallery.addEventListener('change', (e) => procesarArchivosImagen(e.target.files, inputFotoGallery));
+
+function procesarArchivosImagen(fileList, inputEl) {
+    if (!fileList || fileList.length === 0) return;
+    Array.from(fileList).forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 1280;
+                if (width > maxDim || height > maxDim) {
+                    if (width > height) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const fechaHoraAr = new Date().toLocaleString('es-AR');
+                const sistema = document.getElementById('selectSistema').value;
+                const gpsText = AppState.gps.accuracy < 900
+                    ? 'GPS: ' + AppState.gps.lat.toFixed(5) + ', ' + AppState.gps.lon.toFixed(5) + ' (±' + AppState.gps.accuracy + 'm) | Alt: ' + AppState.gps.alt + 'msnm'
+                    : 'GPS: Sin fijacion satelital';
+                const qrText = document.getElementById('inputQrActivo').value.trim() || 'S/D';
+
+                const fontSize = Math.max(13, Math.round(width * 0.022));
+                const lineHeight = Math.round(fontSize * 1.35);
+                const bandHeight = lineHeight * 3 + 14;
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+                ctx.fillRect(0, height - bandHeight, width, bandHeight);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold ' + fontSize + 'px monospace';
+                ctx.fillText('COOPI ' + sistema + ' | ' + fechaHoraAr + ' | OP: ' + AppState.operario, 12, height - bandHeight + lineHeight);
+                ctx.fillText(gpsText, 12, height - bandHeight + lineHeight * 2);
+                ctx.fillText('ACTIVO / QR: ' + qrText, 12, height - bandHeight + lineHeight * 3);
+
+                const stampedBase64 = canvas.toDataURL('image/jpeg', 0.78);
+                AppState.fotos.push({
+                    base64: stampedBase64.split(',')[1],
+                    nombre: 'evidencia_' + Date.now() + '_' + (AppState.fotos.length + 1) + '.jpg',
+                    mimeType: 'image/jpeg'
+                });
+                renderPhotosGrid();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+    inputEl.value = '';
+}
+
+function renderPhotosGrid() {
+    const grid = document.getElementById('photosGrid');
+    grid.innerHTML = '';
+    AppState.fotos.forEach((foto, index) => {
+        const container = document.createElement('div');
+        container.className = 'photo-thumb-container';
+        const img = document.createElement('img');
+        img.src = 'data:image/jpeg;base64,' + foto.base64;
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'photo-delete-btn';
+        delBtn.innerText = 'X';
+        delBtn.onclick = () => { AppState.fotos.splice(index, 1); renderPhotosGrid(); };
+        container.appendChild(img);
+        container.appendChild(delBtn);
+        grid.appendChild(container);
+    });
+}
+
+document.getElementById('btnEscanearQr').addEventListener('click', async () => {
+    if (!('BarcodeDetector' in window)) {
+        alert('Este dispositivo no soporta lector QR directo. Ingrese el código manualmente.');
+        document.getElementById('inputQrActivo').focus();
+        return;
+    }
+    const qrModal = document.getElementById('qrModal');
+    const video = document.getElementById('qrVideo');
+    qrModal.style.display = 'flex';
+    try {
+        AppState.qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = AppState.qrStream;
+        const detector = new BarcodeDetector({ formats: ['qr_code', 'code_128'] });
+        AppState.qrInterval = setInterval(async () => {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                try {
+                    const barcodes = await detector.detect(video);
+                    if (barcodes.length > 0) {
+                        document.getElementById('inputQrActivo').value = barcodes[0].rawValue;
+                        cerrarQrModal();
+                    }
+                } catch (e) {}
+            }
+        }, 400);
+    } catch (err) {
+        cerrarQrModal();
+        alert('No se pudo abrir la cámara para QR: ' + err.message);
+    }
+});
+
+document.getElementById('btnCloseQrModal').addEventListener('click', cerrarQrModal);
+
+function cerrarQrModal() {
+    clearInterval(AppState.qrInterval);
+    if (AppState.qrStream) {
+        AppState.qrStream.getTracks().forEach(t => t.stop());
+        AppState.qrStream = null;
+    }
+    document.getElementById('qrModal').style.display = 'none';
+}
+
+function initEventListeners() {
+    document.getElementById('btnEnviarParte').addEventListener('click', guardarYEnviarParte);
+    document.getElementById('btnSyncManual').addEventListener('click', sincronizarPendientes);
+    document.getElementById('btnCloseModal').addEventListener('click', () => {
+        document.getElementById('resultadoModal').style.display = 'none';
+        resetearFormulario();
+    });
+}
+
+function resetearFormulario() {
+    AppState.audioBlob = null;
+    AppState.audioBase64 = null;
+    AppState.fotos = [];
+    document.getElementById('inputQrActivo').value = '';
+    document.getElementById('audioControlsBox').style.display = 'none';
+    document.getElementById('recorderStatus').innerText = 'Listo para grabar';
+    document.getElementById('photosGrid').innerHTML = '';
+}
+
+async function guardarYEnviarParte() {
+    if (AppState.isRecording) {
+        alert('Detenga la grabación de audio antes de enviar el parte.');
+        return;
+    }
+    if (!AppState.audioBase64 && AppState.fotos.length === 0) {
+        alert('Debe adjuntar al menos un reporte de voz (audio) o una fotografía.');
+        return;
+    }
+    const sistema = document.getElementById('selectSistema').value;
+    const qrActivo = document.getElementById('inputQrActivo').value.trim();
+    const parteId = (crypto.randomUUID ? crypto.randomUUID() : 'P-' + Date.now());
+
+    const partePaquete = {
+        id_parte: parteId,
+        timestamp: Date.now(),
+        sistema: sistema,
+        operario: AppState.operario,
+        qr_activo: qrActivo,
+        gps: AppState.gps,
+        audioBase64: AppState.audioBase64 || '',
+        audioMimeType: AppState.audioMimeType || 'audio/webm',
+        fotos: AppState.fotos,
+        cant_fotos: AppState.fotos.length
+    };
+
+    await guardarEnIndexedDB(partePaquete);
+    await actualizarContadorPendientes();
+
+    if (navigator.onLine) {
+        await sincronizarPendientes();
+    } else {
+        alert('📦 Sin señal. Parte guardado en el teléfono. Se enviará automáticamente al recuperar conexión.');
+        resetearFormulario();
+    }
+}
+
+function guardarEnIndexedDB(parte) {
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction([STORE_NAME], 'readwrite');
+        const req = tx.objectStore(STORE_NAME).put(parte);
+        req.onsuccess = () => resolve(true);
+        req.onerror = (e) => reject(e);
+    });
+}
+
+function obtenerPendientesIndexedDB() {
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction([STORE_NAME], 'readonly');
+        const req = tx.objectStore(STORE_NAME).getAll();
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = (e) => reject(e);
+    });
+}
+
+function eliminarDeIndexedDB(id_parte) {
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction([STORE_NAME], 'readwrite');
+        const req = tx.objectStore(STORE_NAME).delete(id_parte);
+        req.onsuccess = () => resolve(true);
+        req.onerror = (e) => reject(e);
+    });
+}
+
+async function actualizarContadorPendientes() {
+    try {
+        const pendientes = await obtenerPendientesIndexedDB();
+        const count = pendientes.length;
+        document.getElementById('pendingCountBadge').innerText = '📦 Pendientes: ' + count;
+        document.getElementById('btnSyncManual').style.display = count > 0 ? 'block' : 'none';
+    } catch (e) {}
+}
+
+async function apiCall(payloadObj) {
+    const response = await fetch(GAS_WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+            ...payloadObj,
+            pin: AppState.pin,
+            deviceId: getDeviceId(),
+            operario: AppState.operario
+        })
+    });
+    if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+    }
+    return await response.json();
+}
+
+async function sincronizarPendientes() {
+    if (!navigator.onLine || AppState.isSyncing) return;
+    const pendientes = await obtenerPendientesIndexedDB();
+    if (pendientes.length === 0) return;
+
+    AppState.isSyncing = true;
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = document.getElementById('loadingText');
+    loadingOverlay.style.display = 'flex';
+
+    try {
+        for (const parte of pendientes) {
+            loadingText.innerText = 'Sincronizando parte ' + parte.id_parte.slice(0, 6) + ' (1/3: Creando carpeta CDE)...';
+            const resCarpeta = await apiCall({
+                action: 'crearCarpeta',
+                meta: {
+                    id_parte: parte.id_parte,
+                    timestamp: parte.timestamp,
+                    sistema: parte.sistema,
+                    operario: parte.operario
+                }
+            });
+            if (!resCarpeta.success) throw new Error(resCarpeta.error);
+            const folderId = resCarpeta.folderId;
+
+            if (parte.audioBase64) {
+                loadingText.innerText = 'Subiendo reporte de voz (2/3)...';
+                const ext = parte.audioMimeType.includes('mp4') ? 'mp4' : 'webm';
+                const resAudio = await apiCall({
+                    action: 'subirArchivo',
+                    folderId: folderId,
+                    nombreArchivo: 'reporte_voz.' + ext,
+                    mimeType: parte.audioMimeType,
+                    base64Data: parte.audioBase64
+                });
+                if (!resAudio.success) throw new Error(resAudio.error);
+            }
+
+            for (let i = 0; i < parte.fotos.length; i++) {
+                const foto = parte.fotos[i];
+                loadingText.innerText = 'Subiendo foto ' + (i + 1) + ' de ' + parte.fotos.length + ' (2/3)...';
+                const resFoto = await apiCall({
+                    action: 'subirArchivo',
+                    folderId: folderId,
+                    nombreArchivo: 'evidencia_' + (i + 1) + '.jpg',
+                    mimeType: foto.mimeType,
+                    base64Data: foto.base64
+                });
+                if (!resFoto.success) throw new Error(resFoto.error);
+            }
+
+            loadingText.innerText = 'Analizando con Gemini IA y registrando en Sheets (3/3)...';
+            const resGemini = await apiCall({
+                action: 'procesarParte',
+                payload: {
+                    folderId: folderId,
+                    id_parte: parte.id_parte,
+                    timestamp: parte.timestamp,
+                    sistema: parte.sistema,
+                    operario: parte.operario,
+                    qr_activo: parte.qr_activo,
+                    gps: parte.gps,
+                    cant_fotos: parte.cant_fotos
+                }
+            });
+            if (!resGemini.success) throw new Error(resGemini.error);
+
+            await eliminarDeIndexedDB(parte.id_parte);
+            await actualizarContadorPendientes();
+
+            loadingOverlay.style.display = 'none';
+            const iaData = resGemini.resultadoIA;
+            document.getElementById('whatsappTextPreview').innerText = iaData.mensaje_whatsapp;
+            document.getElementById('btnWhatsAppOpen').href = 'https://wa.me/?text=' + encodeURIComponent(iaData.mensaje_whatsapp);
+            document.getElementById('resultadoModal').style.display = 'flex';
+            resetearFormulario();
+            break;
+        }
+    } catch (err) {
+        console.error('Error sincronizando parte:', err);
+        alert('Error de sincronización: ' + err.message + '. El parte sigue resguardado en el teléfono.');
+    } finally {
+        AppState.isSyncing = false;
+        loadingOverlay.style.display = 'none';
+    }
+}
+</script>
+</body>
+</html>
